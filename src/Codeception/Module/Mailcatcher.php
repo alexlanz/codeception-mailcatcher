@@ -1,14 +1,15 @@
 <?php namespace Codeception\Module;
 
 use Codeception\Module;
+use GuzzleHttp\Client;
 
 class MailCatcher extends Module
 {
+
     /**
-     * @var \Guzzle\Http\Client
+     * @var Client
      */
     protected $mailcatcher;
-
 
     /**
      * @var array
@@ -20,41 +21,35 @@ class MailCatcher extends Module
      */
     protected $requiredFields = array('url', 'port');
 
+
+
     public function _initialize()
     {
-        $url = $this->config['url'] . ':' . $this->config['port'];
-        $this->mailcatcher = new \GuzzleHttp\Client(array($url));
+        $config = array(
+            'base_url' => $this->config['url'] . ':' . $this->config['port']
+        );
+
+        $this->mailcatcher = new Client($config);
     }
 
-    private function getURL($url)
+    public function _beforeSuite($settings = array())
     {
-        return $this->config['url'] . ':' . $this->config['port'] . $url;
+        $this->resetEmails();
     }
-
 
     /**
-     * Reset emails
-     *
-     * Clear all emails from mailcatcher. You probably want to do this before
-     * you do the thing that will send emails
-     *
-     * @return void
-     * @author Jordan Eldredge <jordaneldredge@gmail.com>
-     **/
+     * Clear all emails from Mailcatcher.
+     */
     public function resetEmails()
     {
-        $this->mailcatcher->delete($this->getURL)->send();
+        $this->mailcatcher->delete('/messages');
     }
 
-
     /**
-     * See In Last Email
+     * Look for a string in the most recent email.
      *
-     * Look for a string in the most recent email
-     *
-     * @return void
-     * @author Jordan Eldredge <jordaneldredge@gmail.com>
-     **/
+     * @param $expected
+     */
     public function seeInLastEmail($expected)
     {
         $email = $this->lastMessage();
@@ -62,13 +57,11 @@ class MailCatcher extends Module
     }
 
     /**
-     * See In Last Email To
+     * Look for a string in the most recent email sent to a specific email address.
      *
-     * Look for a string in the most recent email sent to $address
-     *
-     * @return void
-     * @author Jordan Eldredge <jordaneldredge@gmail.com>
-     **/
+     * @param $address
+     * @param $expected
+     */
     public function seeInLastEmailTo($address, $expected)
     {
         $email = $this->lastMessageFrom($address);
@@ -77,13 +70,11 @@ class MailCatcher extends Module
     }
 
     /**
-     * Grab Matches From Last Email
+     * Look for a regex in the email source and return it's matches.
      *
-     * Look for a regex in the email source and return it's matches
-     *
-     * @return array
-     * @author Stephan Hochhaus <stephan@yauh.de>
-     **/
+     * @param $regex
+     * @return mixed
+     */
     public function grabMatchesFromLastEmail($regex)
     {
         $email = $this->lastMessage();
@@ -92,13 +83,11 @@ class MailCatcher extends Module
     }
 
     /**
-     * Grab From Last Email
+     * Look for a regex in the email source and return it.
      *
-     * Look for a regex in the email source and return it
-     *
-     * @return string
-     * @author Stephan Hochhaus <stephan@yauh.de>
-     **/
+     * @param $regex
+     * @return mixed
+     */
     public function grabFromLastEmail($regex)
     {
         $matches = $this->grabMatchesFromLastEmail($regex);
@@ -106,14 +95,12 @@ class MailCatcher extends Module
     }
 
     /**
-     * Grab Matches From Last Email To
+     * Look for a regex in most recent email source sent to specific email address and return it's matches.
      *
-     * Look for a regex in most recent email sent to $addres email source and
-     * return it's matches
-     *
-     * @return array
-     * @author Stephan Hochhaus <stephan@yauh.de>
-     **/
+     * @param $address
+     * @param $regex
+     * @return mixed
+     */
     public function grabMatchesFromLastEmailTo($address, $regex)
     {
         $email = $this->lastMessageFrom($address);
@@ -122,35 +109,30 @@ class MailCatcher extends Module
     }
 
     /**
-     * Grab From Last Email To
+     * Look for a regex in most recent email source sent to a specific email address and return it.
      *
-     * Look for a regex in most recent email sent to $addres email source and
-     * return it
-     *
-     * @return string
-     * @author Stephan Hochhaus <stephan@yauh.de>
-     **/
+     * @param $address
+     * @param $regex
+     * @return mixed
+     */
     public function grabFromLastEmailTo($address, $regex)
     {
         $matches = $this->grabMatchesFromLastEmailTo($address, $regex);
         return $matches[0];
     }
 
-    // ----------- HELPER METHODS BELOW HERE -----------------------//
-
     /**
-     * Messages
+     * Get an array of all the message objects.
      *
-     * Get an array of all the message objects
-     *
-     * @return array
-     * @author Jordan Eldredge <jordaneldredge@gmail.com>
-     **/
+     * @return mixed
+     */
     protected function messages()
     {
-        $response = $this->mailcatcher->get('/messages')->send();
+        $response = $this->mailcatcher->get('/messages');
         $messages = $response->json();
-        if (empty($messages)) {
+
+        if (empty($messages))
+        {
             $this->fail("No messages received");
         }
 
@@ -158,13 +140,10 @@ class MailCatcher extends Module
     }
 
     /**
-     * Last Message
+     * Get the most recent email.
      *
-     * Get the most recent email
-     *
-     * @return obj
-     * @author Jordan Eldredge <jordaneldredge@gmail.com>
-     **/
+     * @return mixed
+     */
     protected function lastMessage()
     {
         $messages = $this->messages();
@@ -175,13 +154,11 @@ class MailCatcher extends Module
     }
 
     /**
-     * Last Message From
+     * Get the most recent email sent to the given email address.
      *
-     * Get the most recent email sent to $address
-     *
-     * @return obj
-     * @author Jordan Eldredge <jordaneldredge@gmail.com>
-     **/
+     * @param $address
+     * @return mixed
+     */
     protected function lastMessageFrom($address)
     {
         $messages = $this->messages();
@@ -196,40 +173,35 @@ class MailCatcher extends Module
     }
 
     /**
-     * Email from ID
+     * Returns the email's object given the Mailcatcher id
      *
-     * Given a mailcatcher id, returns the email's object
-     *
-     * @return obj
-     * @author Jordan Eldredge <jordaneldredge@gmail.com>
-     **/
+     * @param $id
+     * @return mixed
+     */
     protected function emailFromId($id)
     {
-        $response = $this->mailcatcher->get("/messages/{$id}.json")->send();
+        $response = $this->mailcatcher->get("/messages/{$id}.json");
         return $response->json();
     }
 
     /**
-     * See In Email
+     * Look for a string in an email source.
      *
-     * Look for a string in an email
-     *
-     * @return void
-     * @author Jordan Eldredge <jordaneldredge@gmail.com>
-     **/
+     * @param $email
+     * @param $expected
+     */
     protected function seeInEmail($email, $expected)
     {
         $this->assertContains($expected, $email['source'], "Email Contains");
     }
 
     /**
-     * Grab From Email
+     * Return the matches of a regex against the raw email source.
      *
-     * Return the matches of a regex against the raw email
-     *
-     * @return void
-     * @author Jordan Eldredge <jordaneldredge@gmail.com>
-     **/
+     * @param $email
+     * @param $regex
+     * @return mixed
+     */
     protected function grabMatchesFromEmail($email, $regex)
     {
         $source = utf8_encode(quoted_printable_decode($email['source']));
