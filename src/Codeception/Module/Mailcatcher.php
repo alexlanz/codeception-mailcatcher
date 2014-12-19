@@ -26,6 +26,11 @@ class MailCatcher extends Module
         $this->mailcatcher = new \GuzzleHttp\Client(array($url));
     }
 
+    private function getURL($url)
+    {
+        return $this->config['url'] . ':' . $this->config['port'] . $url;
+    }
+
 
     /**
      * Reset emails
@@ -38,7 +43,7 @@ class MailCatcher extends Module
      **/
     public function resetEmails()
     {
-        $this->mailcatcher->delete('/messages')->send();
+        $this->mailcatcher->delete($this->getURL)->send();
     }
 
 
