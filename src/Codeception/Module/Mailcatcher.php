@@ -66,7 +66,6 @@ class MailCatcher extends Module
     {
         $email = $this->lastMessageFrom($address);
         $this->seeInEmail($email, $expected);
-
     }
 
     /**
