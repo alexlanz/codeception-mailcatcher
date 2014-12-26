@@ -34,13 +34,13 @@ class MailCatcher extends Module
 
     public function _beforeSuite($settings = array())
     {
-        $this->resetEmails();
+        $this->clearEmails();
     }
 
     /**
      * Clear all emails from Mailcatcher.
      */
-    public function resetEmails()
+    public function clearEmails()
     {
         $this->mailcatcher->delete('/messages');
     }
