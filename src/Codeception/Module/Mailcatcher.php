@@ -1,6 +1,7 @@
 <?php namespace Codeception\Module;
 
 use Codeception\Module;
+use Codeception\TestCase;
 use GuzzleHttp\Client;
 
 class MailCatcher extends Module
@@ -32,8 +33,7 @@ class MailCatcher extends Module
         $this->mailcatcher = new Client($config);
     }
 
-    public function _beforeSuite($settings = array())
-    {
+    public function _before(TestCase $test) {
         $this->clearEmails();
     }
 
