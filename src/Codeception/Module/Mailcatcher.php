@@ -33,9 +33,14 @@ class MailCatcher extends Module
         $this->mailcatcher = new Client($config);
     }
 
+
+    /**
+     * Clear all emails before every test.
+     */
     public function _before(TestCase $test) {
         $this->clearEmails();
     }
+
 
     /**
      * Clear all emails from Mailcatcher.
